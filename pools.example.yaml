@@ -1,0 +1,99 @@
+# Example usage pools and routes. Copy to pools.yaml (gitignored) and edit the
+# numbers to match your own plans; the code reads pools.yaml, never this file.
+#
+# A pool is one plan-included usage allowance (a subscription's weekly or monthly
+# quota). A route is one (backend, effort, model) combination that draws on a
+# pool. pct_per_session is how much of its pool one session of that route
+# consumes; it is the only number comparable across pools. Percentages of
+# different pools mean little on their own.
+#
+# Every number below is a PLACEHOLDER, not a measurement. Calibrate by reading
+# your provider's usage dashboard before and after a known number of sessions,
+# then set calibration to "measured". Leave pct_per_session non-null: a null
+# rate lets a route proceed against a spent pool as uncalibrated.
+#
+# Update used_pct and snapshot whenever you read the real dashboard.
+# pool-status.sh warns when a snapshot goes stale.
+
+pools:
+  cursor-models:
+    cycle_days: 31
+    used_pct: 40
+    resets: 2026-10-01
+    snapshot: 2026-09-23
+    note: >-
+      Cursor's own models. Cheap per session, so a good default home for
+      mechanical and standard work.
+  chatgpt-plan:
+    cycle_days: 7
+    used_pct: 30
+    resets: 2026-09-28T08:00
+    snapshot: 2026-09-23
+    note: >-
+      Codex usage included in a ChatGPT plan.
+  claude-plan:
+    cycle_days: 7
+    used_pct: 30
+    resets: 2026-09-28T08:00
+    snapshot: 2026-09-23
+    contended: true       # you also use this pool by hand; leave headroom
+    reserve_pct: 20       # the loop refuses to spend the last 20 points
+    note: >-
+      Claude Code usage included in a Claude plan.
+  restricted-plan:
+    off_limits: true      # shown in pool-status but never routed to (e.g. a work account)
+    note: >-
+      A pool the loop must never spend, kept here so it stays visible.
+
+# tier is what the work needs: mechanical < standard < frontier. --tier picks
+# the cheapest route at or above the tier whose pool can afford a session.
+# tier: never keeps a route out of auto-routing; an explicit --model still works.
+routes:
+  - name: cursor-low
+    backend: cursor
+    effort: low
+    model: your-cursor-model-low      # a model id valid for cursor-agent
+    pool: cursor-models
+    pct_per_session: 0.05
+    calibration: estimated
+    tier: mechanical
+  - name: cursor-medium
+    backend: cursor
+    effort: medium
+    model: your-cursor-model-medium
+    pool: cursor-models
+    pct_per_session: 0.1
+    calibration: estimated
+    tier: standard
+  - name: codex-medium
+    backend: codex
+    effort: medium
+    model: your-codex-model
+    pool: chatgpt-plan
+    pct_per_session: 2.0
+    calibration: estimated
+    tier: standard
+  - name: codex-high
+    backend: codex
+    effort: high
+    model: your-codex-model
+    pool: chatgpt-plan
+    pct_per_session: 4.0
+    calibration: estimated
+    tier: frontier
+  - name: claude-medium
+    backend: claude
+    effort: medium
+    model: sonnet
+    pool: claude-plan
+    pct_per_session: 3.0
+    calibration: estimated
+    tier: standard
+  - name: claude-high
+    backend: claude
+    effort: high
+    model: opus
+    pool: claude-plan
+    pct_per_session: 8.0
+    calibration: estimated
+    tier: frontier

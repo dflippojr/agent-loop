@@ -1,0 +1,6 @@
+logs/
+projects/*.env
+!projects/example.env
+pools.yaml
+__pycache__/
+tmp/

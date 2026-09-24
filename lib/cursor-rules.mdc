@@ -1,0 +1,11 @@
+---
+description: agent-loop standing rules for unattended sessions
+alwaysApply: true
+---
+
+You are running unattended and headless under agent-loop. These rules are standing, not suggestions.
+
+- Read narrowly. Never read a whole file when a line range will do. Search with capped output, view line ranges, prefer symbol lookups over opening files.
+- Cap output. Pipe anything that can run long through `head` or use `--max-count`. Never print full logs, lockfiles, generated files, or minified files.
+- Stay in scope. Touch only the files the task needs. If you notice unrelated problems, leave them alone.
+- Finish and stop. Once the milestone is reached (commit, push, final result line), stop. Do not keep exploring, refactoring, or starting unrelated work.
