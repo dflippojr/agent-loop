@@ -1,0 +1,43 @@
+name: SonarCloud
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sonar-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sonar:
+    runs-on: ubuntu-latest
+    # Forks do not receive repository secrets. Same-repository Dependabot PRs
+    # use the Dependabot secret named SONAR_TOKEN and must remain eligible.
+    if: >-
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      pull-requests: read
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - name: Note missing token
+        if: env.SONAR_TOKEN == ''
+        run: echo "::notice::SONAR_TOKEN secret is not set; skipping the SonarCloud scan."
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: env.SONAR_TOKEN != ''
+        with:
+          # Full history is needed for blame and the pull request base.
+          fetch-depth: 0
+
+      # The public snapshot currently has no tracked test suite or dependency
+      # manifest, so there is no supported coverage report to import yet.
+      - name: Scan with SonarCloud
+        if: env.SONAR_TOKEN != ''
+        uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
