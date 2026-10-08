@@ -33,11 +33,7 @@ SESSIONS="$LOG_DIR/sessions.jsonl"
 OUTCOMES="$LOG_DIR/outcomes.json"
 [ -f "$SESSIONS" ] || { echo "no session log at $SESSIONS (run backfill-sessions.sh first)" >&2; exit 1; }
 
-PY=""
-for candidate in python3 python; do
-  "$candidate" -c "import sys" >/dev/null 2>&1 && { PY="$candidate"; break; }
-done
-[ -n "$PY" ] || { echo "report.sh requires python3 or python on PATH" >&2; exit 96; }
+PY="$(find_python)" || { echo "report.sh requires python3 or python on PATH" >&2; exit 96; }
 
 if [ "$REFRESH" -eq 1 ]; then
   command -v jq >/dev/null 2>&1 || { echo "report.sh --refresh requires jq on PATH" >&2; exit 96; }

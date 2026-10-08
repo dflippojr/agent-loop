@@ -2,6 +2,9 @@
 # Shared project-config loading, worktree setup, and issue-fetch helpers for
 # agent-loop entrypoints (run-issue.sh, refine-issue.sh). Sourced, not run.
 
+# shellcheck source=os.sh
+source "$(dirname "${BASH_SOURCE[0]}")/os.sh"
+
 load_project_config() {
   local script_dir="$1" project="$2"
   local config_file="$script_dir/projects/${project}.env"
@@ -303,11 +306,8 @@ check_pool() { # $1=script_dir $2=backend $3=effort $4=model -> 0 proceed, 90 re
   local script_dir="$1" backend="$2" effort="${3:-}" model="${4:-}"
   local config="$script_dir/pools.yaml"
   [ -f "$config" ] || return 0
-  local py=""
-  for candidate in python3 python; do
-    "$candidate" -c "import sys" >/dev/null 2>&1 && { py="$candidate"; break; }
-  done
-  [ -n "$py" ] || return 0
+  local py
+  py="$(find_python)" || return 0
   "$py" "$script_dir/lib/pool_status.py" --check "$config" "$backend" "$effort" "$model"
 }
 
@@ -386,10 +386,7 @@ resolve_tier() { # $1=script_dir $2=tier
   local script_dir="$1" tier="$2"
   local config="$script_dir/pools.yaml"
   [ -f "$config" ] || { echo "--tier needs a pools.yaml at $config" >&2; return 2; }
-  local py=""
-  for candidate in python3 python; do
-    "$candidate" -c "import sys" >/dev/null 2>&1 && { py="$candidate"; break; }
-  done
-  [ -n "$py" ] || { echo "--tier needs python3 or python on PATH" >&2; return 96; }
+  local py
+  py="$(find_python)" || { echo "--tier needs python3 or python on PATH" >&2; return 96; }
   "$py" "$script_dir/lib/pool_status.py" --route "$config" "$tier"
 }
