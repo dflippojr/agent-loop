@@ -60,9 +60,12 @@ mode via `--force` alone).
 ## Usage
 
 ```sh
-bash run-issue.sh --project <name> --issue <N> --backend <codex|cursor|claude> \
+bash run-issue.sh --project <name> --issue <N> \
+     (--backend <codex|cursor|claude> | --tier <mechanical|standard|frontier>) \
      [--effort <low|medium|high|xhigh|max>] [--model <id>] \
-     [--timeout <minutes>] [--stall <minutes>]
+     [--timeout <minutes>] [--stall <minutes>] [--auto-escalate] \
+     [--task-file <path> | --chain]
+bash run-pr.sh --project <name> --pr <N> --task <fix-findings|merge-main|fix-ci|custom>
 bash refine-issue.sh --project <name> --issue <N> --backend <codex|cursor|claude> \
      [--effort <low|medium|high|xhigh|max>] [--model <id>]
 bash status.sh --project <name>
