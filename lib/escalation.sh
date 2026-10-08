@@ -72,7 +72,7 @@ escalation_check() {
   local py n threshold next
   py="$(find_python)" || return 0
   n="$("$py" "$script_dir/lib/escalation.py" count "$log_dir/sessions.jsonl" \
-        "$project" "$kind" "$item" "$tier" 2>/dev/null)"
+        "$project" "$kind" "$item" "$tier" "$log_dir" 2>/dev/null)"
   case "$n" in ''|*[!0-9]*) return 0 ;; esac
 
   threshold="${AGENT_ESCALATE_AFTER:-2}"

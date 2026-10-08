@@ -1,7 +1,7 @@
 """Consecutive-failure counting for tier escalation. Invoked by
 lib/escalation.sh; not meant to be run directly.
 
-  escalation.py count <sessions.jsonl> <project> <kind> <item> <tier>
+  escalation.py count <sessions.jsonl> <project> <kind> <item> <tier> <log_dir>
 
 Prints one line: "<consecutive_failures>". Walks sessions for this exact
 (project, kind, item, tier) in start-time order and counts backwards from the
@@ -15,26 +15,14 @@ completed, working attempt. Tier is matched exactly: a session run without
 break another tier's streak either.
 """
 
-import json
-import os
 import sys
 
+if __package__:
+    from .jsonl import load_jsonl
+else:
+    from jsonl import load_jsonl
+
 OK_RESULTS = {"PUSHED", "NO_CHANGE"}
-
-
-def load_jsonl(path):
-    rows = []
-    if not os.path.exists(path):
-        return rows
-    with open(path, encoding="utf-8") as handle:
-        for line in handle:
-            line = line.strip()
-            if line:
-                try:
-                    rows.append(json.loads(line))
-                except ValueError:
-                    continue
-    return rows
 
 
 def is_failure(row):
@@ -44,9 +32,9 @@ def is_failure(row):
     return result not in OK_RESULTS
 
 
-def count(sessions_path, project, kind, item, tier):
+def count(sessions_path, project, kind, item, tier, log_dir):
     rows = [
-        r for r in load_jsonl(sessions_path)
+        r for r in load_jsonl(sessions_path, log_dir)
         if r.get("project") == project and r.get("kind") == kind
         and str(r.get("item")) == str(item) and (r.get("tier") or "") == tier
     ]
@@ -61,8 +49,12 @@ def count(sessions_path, project, kind, item, tier):
 
 
 def main(argv):
-    if len(argv) == 7 and argv[1] == "count":
-        print(count(argv[2], argv[3], argv[4], argv[5], argv[6]))
+    if len(argv) == 8 and argv[1] == "count":
+        try:
+            print(count(argv[2], argv[3], argv[4], argv[5], argv[6], argv[7]))
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
         return 0
     print(__doc__, file=sys.stderr)
     return 2

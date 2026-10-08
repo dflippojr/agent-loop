@@ -38,4 +38,4 @@ fi
 
 PY="$(find_python)" || { echo "pool-status.sh requires python3 or python on PATH" >&2; exit 96; }
 
-exec "$PY" "$SCRIPT_DIR/lib/pool_status.py" "$CONFIG" "$LOG_DIR/sessions.jsonl"
+exec "$PY" "$SCRIPT_DIR/lib/pool_status.py" "$CONFIG" "$LOG_DIR/sessions.jsonl" "$LOG_DIR"

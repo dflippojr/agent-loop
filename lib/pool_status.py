@@ -1,6 +1,10 @@
 """Print each usage pool's headroom, reset, observed burn rate and projected
 end-of-cycle usage. Invoked by pool-status.sh; not meant to be run directly.
 
+  pool_status.py <pools.yaml> <sessions.jsonl> <log_dir>
+
+The wrapper supplies its configured (or default) log_dir as the read boundary.
+
 The unit that matters is sessions, not percent. Percentages are comparable
 only within a pool, so a pool's headroom is reported both ways: the raw
 percent, and how many sessions of its cheapest route that percent buys.
@@ -10,10 +14,14 @@ never been calibrated is not projected at all -- an invented burn rate is
 worse than an admitted gap, because routing decisions get made off this table.
 """
 
-import json
 import os
 import sys
 from datetime import datetime, timedelta
+
+if __package__:
+    from .jsonl import load_jsonl as load_sessions
+else:
+    from jsonl import load_jsonl as load_sessions
 
 try:
     import yaml
@@ -39,22 +47,6 @@ def parse_when(value):
         except ValueError:
             continue
     return None
-
-
-def load_sessions(path):
-    if not os.path.exists(path):
-        return []
-    rows = []
-    with open(path, encoding="utf-8") as handle:
-        for line in handle:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                rows.append(json.loads(line))
-            except ValueError:
-                continue  # a partially written line; skip rather than fail
-    return rows
 
 
 def topup_hint(pool, rate=None):
@@ -282,7 +274,10 @@ def main():
 
     pools = config.get("pools") or {}
     routes = config.get("routes") or []
-    sessions = load_sessions(sessions_path)
+    try:
+        sessions = load_sessions(sessions_path, sys.argv[3])
+    except ValueError as exc:
+        sys.exit(str(exc))
     now = datetime.now()
 
     # Observed burn: sessions per pool inside the window, priced at the route
