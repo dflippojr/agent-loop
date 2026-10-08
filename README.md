@@ -50,16 +50,22 @@ mode via `--force` alone).
 
 ## Prerequisites
 
-- `git`, `gh` (authenticated for the target repo), `jq` (falls back to
-  `python3`/`python` if `jq` isn't on PATH)
+- `git`, `gh` (authenticated for the target repo), `jq`. `run-issue.sh` and
+  `refine-issue.sh` fall back to `python3`/`python` if `jq` isn't on PATH;
+  `status.sh`, `open-pr.sh` and `report.sh` (unless `--no-refresh`) require `jq`
+- `python3` (or `python`) for tiers, pool routing, state files, `report.sh` and
+  `pool-status.sh`; a missing tool exits **96**
 - Whichever backend CLI(s) you plan to use, authenticated and on PATH
 
 ## Usage
 
 ```sh
-bash run-issue.sh --project <name> --issue <N> --backend <codex|cursor|claude> \
+bash run-issue.sh --project <name> --issue <N> \
+     (--backend <codex|cursor|claude> | --tier <mechanical|standard|frontier>) \
      [--effort <low|medium|high|xhigh|max>] [--model <id>] \
-     [--timeout <minutes>] [--stall <minutes>]
+     [--timeout <minutes>] [--stall <minutes>] [--auto-escalate] \
+     [--task-file <path> | --chain]
+bash run-pr.sh --project <name> --pr <N> --task <fix-findings|merge-main|fix-ci|custom>
 bash refine-issue.sh --project <name> --issue <N> --backend <codex|cursor|claude> \
      [--effort <low|medium|high|xhigh|max>] [--model <id>]
 bash status.sh --project <name>
@@ -384,6 +390,11 @@ is invisible, so that count can run high, and a retry with changed arguments is
 missed. Claude's transcript is found through the `session_id` in its JSON usage file, so
 it needs `~/.claude` (or `CLAUDE_CONFIG_DIR`) on the machine that ran the session.
 
+`report.sh`, `pool-status.sh` and tier escalation all read `sessions.jsonl` through
+`lib/jsonl.py`, which refuses (raises `ValueError`) any path that resolves outside the
+project's `LOG_DIR`, symlinks and `..` included. Unparseable lines are skipped, and a
+missing file reads as empty.
+
 Pool refusals are recorded (`termination: pool-refused`, exit 90) so they can be
 counted, but `report.sh` and `pool-status.sh` leave them out of cost and burn. A
 tier that resolves to nothing affordable refuses before a project is loaded and is
@@ -677,6 +688,14 @@ On a kill:
 - A killed `fix-findings` run never printed a `PR_<N>_RESULT:` line, so it is
   not counted toward `run-pr.sh`'s review-round cap.
 
+## Tests
+
+```sh
+python -m unittest discover -s tests
+```
+
+Run from the repo root. Currently covers `lib/jsonl.py` (`tests/test_jsonl.py`).
+
 ## Exit codes
 
 | code | meaning |
@@ -684,7 +703,7 @@ On a kill:
 | 89 | could not get a launch slot within the wait limit |
 | 90 | the target pool cannot afford another session (`POOL_SPENT`) |
 | 91 | review-round cap reached; handoff brief written (`run-pr.sh`) |
-| 92-98 | worktree, PR-state and prerequisite failures (see each script) |
+| 92-98 | worktree, PR-state and prerequisite failures (96 is a missing `jq`/`python`; see each script) |
 | 99 | the [watchdog](#watchdog) killed a stalled or over-ceiling session |
 
 ## Known rough edges
