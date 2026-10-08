@@ -11,23 +11,18 @@
 # Outcome of the last state_finalize is left in AGENT_STATE_STATUS
 # (valid | stale | invalid | missing | unchecked) for record_session.
 
+# shellcheck source=os.sh
+source "$(dirname "${BASH_SOURCE[0]}")/os.sh"
+
 # <LOG_DIR>/state/<project>-<issue|pr>-<N>.json
 state_file_path() { # $1=log_dir $2=project $3=issue|pr $4=number
   echo "$1/state/${2}-${3}-${4}.json"
 }
 
-_state_python() {
-  local candidate
-  for candidate in python3 python; do
-    if "$candidate" -c "import sys" >/dev/null 2>&1; then echo "$candidate"; return 0; fi
-  done
-  return 1
-}
-
 # Run lib/state.py. Silent no-op (status 127) when python is missing.
 _state_py() { # $@=state.py args
   local py
-  py="$(_state_python)" || return 127
+  py="$(find_python)" || return 127
   "$py" "$(dirname "${BASH_SOURCE[0]}")/state.py" "$@"
 }
 
@@ -91,7 +86,7 @@ _state_gather_event_info() { # $1=worktree $2=base ref $3=reason $4=log
   unpushed="$(cd "$worktree" 2>/dev/null && git log --oneline "${base}..HEAD" 2>/dev/null | head -c 1000)"
   tail=""
   [ -f "$log" ] && tail="$(tail -c 4000 "$log" 2>/dev/null)"
-  py="$(_state_python)" || return 127
+  py="$(find_python)" || return 127
   "$py" -c '
 import json, sys
 print(json.dumps({

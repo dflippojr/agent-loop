@@ -2,13 +2,8 @@
 # Disposable single-task sessions driven by scoped task files (agent-loop#7).
 # Sourced by run-issue.sh; not meant to be executed directly.
 
-_taskfile_python() {
-  local candidate
-  for candidate in python3 python; do
-    if "$candidate" -c "import sys" >/dev/null 2>&1; then echo "$candidate"; return 0; fi
-  done
-  return 1
-}
+# shellcheck source=os.sh
+source "$(dirname "${BASH_SOURCE[0]}")/os.sh"
 
 # Prints "ok" and returns 0, or prints the reason and returns 1/3 (see
 # lib/taskfile.py). Returns 127 with a message when no python is on PATH --
@@ -16,14 +11,14 @@ _taskfile_python() {
 # instruction, so an unvalidated one must not be allowed to run.
 taskfile_check() { # $1=path
   local py
-  py="$(_taskfile_python)" || { echo "no python on PATH; cannot validate task files"; return 127; }
+  py="$(find_python)" || { echo "no python on PATH; cannot validate task files"; return 127; }
   "$py" "$(dirname "${BASH_SOURCE[0]}")/taskfile.py" check "$1"
 }
 
 # The task file's content, to use as the session's prompt body.
 taskfile_render() { # $1=path
   local py
-  py="$(_taskfile_python)" || return 127
+  py="$(find_python)" || return 127
   "$py" "$(dirname "${BASH_SOURCE[0]}")/taskfile.py" render "$1"
 }
 

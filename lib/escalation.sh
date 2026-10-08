@@ -17,7 +17,7 @@
 #     lets the launcher actually re-dispatch, still gated by the existing pool
 #     check -- escalation never bypasses "the pool cannot afford this".
 #
-# Requires lib/state.sh already sourced (uses its _state_python/_state_py).
+# Requires lib/state.sh already sourced (uses its find_python/_state_py).
 
 tier_after() { # $1=tier -> the next tier up, or empty at the top / on an unknown tier
   case "$1" in
@@ -70,7 +70,7 @@ escalation_check() {
   [ -n "$tier" ] || return 0  # nothing to escalate to without a tier ladder
 
   local py n threshold next
-  py="$(_state_python)" || return 0
+  py="$(find_python)" || return 0
   n="$("$py" "$script_dir/lib/escalation.py" count "$log_dir/sessions.jsonl" \
         "$project" "$kind" "$item" "$tier" 2>/dev/null)"
   case "$n" in ''|*[!0-9]*) return 0 ;; esac

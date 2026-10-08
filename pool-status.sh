@@ -36,12 +36,6 @@ else
   LOG_DIR="$SCRIPT_DIR/logs"
 fi
 
-# Probe by running it, not just by finding it: on Windows, python3 is usually
-# a Microsoft Store stub that exists on PATH and exits 49 when invoked.
-PY=""
-for candidate in python3 python; do
-  "$candidate" -c "import sys" >/dev/null 2>&1 && { PY="$candidate"; break; }
-done
-[ -n "$PY" ] || { echo "pool-status.sh requires python3 or python on PATH" >&2; exit 96; }
+PY="$(find_python)" || { echo "pool-status.sh requires python3 or python on PATH" >&2; exit 96; }
 
 exec "$PY" "$SCRIPT_DIR/lib/pool_status.py" "$CONFIG" "$LOG_DIR/sessions.jsonl"
