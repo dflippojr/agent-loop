@@ -10,10 +10,14 @@ never been calibrated is not projected at all -- an invented burn rate is
 worse than an admitted gap, because routing decisions get made off this table.
 """
 
-import json
 import os
 import sys
 from datetime import datetime, timedelta
+
+if __package__:
+    from .jsonl import load_jsonl as load_sessions
+else:
+    from jsonl import load_jsonl as load_sessions
 
 try:
     import yaml
@@ -39,22 +43,6 @@ def parse_when(value):
         except ValueError:
             continue
     return None
-
-
-def load_sessions(path):
-    if not os.path.exists(path):
-        return []
-    rows = []
-    with open(path, encoding="utf-8") as handle:
-        for line in handle:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                rows.append(json.loads(line))
-            except ValueError:
-                continue  # a partially written line; skip rather than fail
-    return rows
 
 
 def topup_hint(pool, rate=None):

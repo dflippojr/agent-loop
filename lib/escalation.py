@@ -15,26 +15,14 @@ completed, working attempt. Tier is matched exactly: a session run without
 break another tier's streak either.
 """
 
-import json
-import os
 import sys
 
+if __package__:
+    from .jsonl import load_jsonl
+else:
+    from jsonl import load_jsonl
+
 OK_RESULTS = {"PUSHED", "NO_CHANGE"}
-
-
-def load_jsonl(path):
-    rows = []
-    if not os.path.exists(path):
-        return rows
-    with open(path, encoding="utf-8") as handle:
-        for line in handle:
-            line = line.strip()
-            if line:
-                try:
-                    rows.append(json.loads(line))
-                except ValueError:
-                    continue
-    return rows
 
 
 def is_failure(row):
