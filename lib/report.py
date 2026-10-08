@@ -1,6 +1,10 @@
 """Join the session log to real merge outcomes and report what work actually
 cost. Invoked by report.sh; not meant to be run directly.
 
+  report.py <sessions.jsonl> <outcomes.json> <pools.yaml> <log_dir>
+
+The wrapper supplies log_dir from project configuration as the read boundary.
+
 The question this answers is the one the raw log cannot: not "how many
 sessions did we run" but "what did a merged PR cost, and on which route". An
 item that merged after one cheap session and an item that merged after nine
@@ -142,7 +146,10 @@ def quality_report(everything, sessions, items, outcomes):
 def main():
     sessions_path, outcomes_path, pools_path = sys.argv[1], sys.argv[2], sys.argv[3]
 
-    everything = load_jsonl(sessions_path)
+    try:
+        everything = load_jsonl(sessions_path, sys.argv[4])
+    except ValueError as exc:
+        sys.exit(str(exc))
     if not everything:
         sys.exit("no sessions in %s" % sessions_path)
     # A refusal is a launch that never ran: it belongs in the termination counts

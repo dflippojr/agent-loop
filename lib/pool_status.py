@@ -1,6 +1,10 @@
 """Print each usage pool's headroom, reset, observed burn rate and projected
 end-of-cycle usage. Invoked by pool-status.sh; not meant to be run directly.
 
+  pool_status.py <pools.yaml> <sessions.jsonl> <log_dir>
+
+The wrapper supplies its configured (or default) log_dir as the read boundary.
+
 The unit that matters is sessions, not percent. Percentages are comparable
 only within a pool, so a pool's headroom is reported both ways: the raw
 percent, and how many sessions of its cheapest route that percent buys.
@@ -270,7 +274,10 @@ def main():
 
     pools = config.get("pools") or {}
     routes = config.get("routes") or []
-    sessions = load_sessions(sessions_path)
+    try:
+        sessions = load_sessions(sessions_path, sys.argv[3])
+    except ValueError as exc:
+        sys.exit(str(exc))
     now = datetime.now()
 
     # Observed burn: sessions per pool inside the window, priced at the route

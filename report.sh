@@ -88,4 +88,4 @@ if [ "$REFRESH" -eq 1 ]; then
   } > "$OUTCOMES"
 fi
 
-exec "$PY" "$SCRIPT_DIR/lib/report.py" "$SESSIONS" "$OUTCOMES" "$SCRIPT_DIR/pools.yaml"
+exec "$PY" "$SCRIPT_DIR/lib/report.py" "$SESSIONS" "$OUTCOMES" "$SCRIPT_DIR/pools.yaml" "$LOG_DIR"
