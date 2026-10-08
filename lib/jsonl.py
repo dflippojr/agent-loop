@@ -14,11 +14,9 @@ def load_jsonl(path, log_dir):
     """
     log_dir = os.path.realpath(log_dir)
     path = os.path.realpath(path)
-    try:
-        inside = os.path.commonpath([log_dir, path]) == log_dir
-    except ValueError:  # Different drives on Windows cannot share a directory.
-        inside = False
-    if not inside:
+    # Include the separator so sibling names such as logs-other cannot pass.
+    # normcase preserves Windows' case-insensitive path semantics.
+    if not os.path.normcase(path).startswith(os.path.normcase(os.path.join(log_dir, ""))):
         raise ValueError("session log path must stay inside %s: %s" % (log_dir, path))
 
     rows = []
